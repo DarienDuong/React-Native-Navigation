@@ -22,23 +22,48 @@ export const passwordChanged = text => {
 };
 
 export const loginUser = ({ email, password }) => {
-  return dispatch => {
-    dispatch({ type: LOGIN_USER });
-
-    firebase
-      .auth()
-      .signInWithEmailAndPassword(email, password)
-      .then(user => loginUserSuccess(dispatch, user))
-      .catch(error => {
-        console.log(error);
-
-        firebase
+  return async dispatch => {
+    return new Promise(async (resolve, reject) => {
+      dispatch({ type: LOGIN_USER });
+      try {
+        const user = await firebase
           .auth()
-          .createUserWithEmailAndPassword(email, password)
-          .then(user => loginUserSuccess(dispatch, user))
-          .catch(() => loginUserFail(dispatch));
-      });
+          .signInWithEmailAndPassword(email, password);
+        loginUserSuccess(dispatch, user);
+        return resolve();
+      } catch (e) {
+        console.log(e);
+        try {
+          const user = await firebase
+            .auth()
+            .createUserWithEmailAndPassword(email, password);
+          loginUserSuccess(dispatch, user);
+        } catch (e) {
+          console.log(e);
+          loginUserFail(dispatch);
+        }
+        return reject();
+      }
+    });
   };
+
+  // return dispatch => {
+  //   dispatch({ type: LOGIN_USER });
+
+  //   firebase
+  //     .auth()
+  //     .signInWithEmailAndPassword(email, password)
+  //     .then(user => loginUserSuccess(dispatch, user))
+  //     .catch(error => {
+  //       console.log(error);
+
+  //       firebase
+  //         .auth()
+  //         .createUserWithEmailAndPassword(email, password)
+  //         .then(user => loginUserSuccess(dispatch, user))
+  //         .catch(() => loginUserFail(dispatch));
+  //     });
+  // };
 };
 
 const loginUserFail = dispatch => {
